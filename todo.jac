@@ -1,4 +1,4 @@
-"""A Simple To-Do List App in Jaclang"""
+"""To-Do List App"""
 
 class ToDoList {
     def init(self: ToDoList) {
