@@ -6,11 +6,11 @@ glob llm = Model(model_name="gemini/gemini-2.0-flash");
 # Base node for all entities in the system
 node GarageEntity{}
 
-# Node to store Customer Information
+# Node to store Customer Information (Semicolons added)
 node Customer(GarageEntity){
     has name: str;
     has phone: str;
-    has email: str;
+    has email: str; 
     
     can manage with GarageManager entry {
         visitor.data["customer_name"] = self.name;
@@ -19,24 +19,26 @@ node Customer(GarageEntity){
     }
 }
 
-# Node to store Vehicle Information
+# Node to store Vehicle Information (Semicolons added)
 node Vehicle(GarageEntity){
     has make: str;
     has model: str;
     has year: int;
-    has license_plate: str;
+    has engine: int;
+    has license_plate: str; 
     
     can manage with GarageManager entry {
         visitor.data["vehicle_make"] = self.make;
         visitor.data["vehicle_model"] = self.model;
         visitor.data["vehicle_year"] = self.year;
+        visitor.data["engine_size"] = self.engine; 
         visitor.data["license_plate"] = self.license_plate;
     }
 }
 
-# Node to store Service Job Details
+# Node to store Service Job Details (Semicolons added)
 node ServiceJob(GarageEntity){
-    has service_type: str; # e.g., 'Oil Change', 'Brake Repair', 'Diagnostics'
+    has service_type: str; 
     has mechanic_notes: str;
     has labor_cost: float;
     has parts_cost: float;
@@ -74,6 +76,7 @@ walker GarageManager{
     Data to include:
     - Customer: {customer_name}, {customer_phone}
     - Vehicle: {vehicle_year} {vehicle_make} {vehicle_model} ({license_plate})
+    - Engine Size: {engine_size} 
     - Service Performed: {service_type}
     - Mechanic Notes: {mechanic_notes}
     - Total Cost: Kshs{total_cost} (Labor: Kshs{labor_cost}, Parts: Kshs{parts_cost})
@@ -107,6 +110,7 @@ with entry {
     v_make = input("Make: ");
     v_model = input("Model: ");
     v_year = input("Year: ");
+    v_engine = input("Engine Size (e.g., 1200 for 1.2L): ");
     v_plate = input("License Plate: ");
     
     # 3. Service Job Details
@@ -118,9 +122,8 @@ with entry {
     j_parts = input("Parts Cost (Kshs): ");
 
     # Create and link the tracking nodes to the root
-    # Note: v_year is converted to int, and costs are converted to float
     root ++> Customer(name=c_name, phone=c_phone, email=c_email);
-    root ++> Vehicle(make=v_make, model=v_model, year=int(v_year), license_plate=v_plate);
+    root ++> Vehicle(make=v_make, model=v_model, year=int(v_year), engine=int(v_engine), license_plate=v_plate); 
     root ++> ServiceJob(
         service_type=j_type,
         mechanic_notes=j_notes,
@@ -139,5 +142,5 @@ with entry {
     print("=" * 40);
     print(agent.data['service_report']);
     print("\n" + "=" * 40);
-    #print(" System Complete. Data stored in graph nodes.");
+    print(" System Complete. Data stored in graph nodes.");
 }
