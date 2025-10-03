@@ -6,11 +6,11 @@ glob llm = Model(model_name="gemini/gemini-2.0-flash");
 # Base node for all entities in the system
 node GarageEntity{}
 
-# Node to store Customer Information (Semicolons added)
+# Node to store Customer Information
 node Customer(GarageEntity){
     has name: str;
     has phone: str;
-    has email: str; 
+    has email: str;
     
     can manage with GarageManager entry {
         visitor.data["customer_name"] = self.name;
@@ -19,26 +19,24 @@ node Customer(GarageEntity){
     }
 }
 
-# Node to store Vehicle Information (Semicolons added)
+# Node to store Vehicle Information
 node Vehicle(GarageEntity){
     has make: str;
     has model: str;
     has year: int;
-    has engine: int;
-    has license_plate: str; 
+    has license_plate: str;
     
     can manage with GarageManager entry {
         visitor.data["vehicle_make"] = self.make;
         visitor.data["vehicle_model"] = self.model;
         visitor.data["vehicle_year"] = self.year;
-        visitor.data["engine_size"] = self.engine; 
         visitor.data["license_plate"] = self.license_plate;
     }
 }
 
-# Node to store Service Job Details (Semicolons added)
+# Node to store Service Job Details
 node ServiceJob(GarageEntity){
-    has service_type: str; 
+    has service_type: str; # e.g., 'Oil Change', 'Brake Repair', 'Diagnostics'
     has mechanic_notes: str;
     has labor_cost: float;
     has parts_cost: float;
@@ -76,7 +74,6 @@ walker GarageManager{
     Data to include:
     - Customer: {customer_name}, {customer_phone}
     - Vehicle: {vehicle_year} {vehicle_make} {vehicle_model} ({license_plate})
-    - Engine Size: {engine_size} 
     - Service Performed: {service_type}
     - Mechanic Notes: {mechanic_notes}
     - Total Cost: Kshs{total_cost} (Labor: Kshs{labor_cost}, Parts: Kshs{parts_cost})
@@ -91,56 +88,102 @@ walker GarageManager{
 
 # Program execution block
 with entry {
-    print(" CAR GARAGE MANAGEMENT SYSTEM");
     print("=" * 40);
-
+    print("🚗 CAR GARAGE MANAGEMENT SYSTEM 🛠️");
+    print("=" * 40);
     # Inform the user about the required cost input format
-    print("\n*** IMPORTANT: Please enter all cost amounts as numbers ONLY (e.g., 5000, not 5,000) ***");
+    print("\n*** IMPORTANT: Please enter all cost amounts as numbers ONLY (e.g., 5000) ***");
     
-    # 1. Customer Details
-    print("\n CUSTOMER DETAILS");
-    print("-" * 20);
-    c_name = input("Customer Name: ");
-    c_phone = input("Phone Number: ");
-    c_email = input("Email: ");
+    while True {
+        print("\n" + "=" * 40);
+        choice = input("Start a New Service Job? (yes/exit): ").strip().lower();
 
-    # 2. Vehicle Details
-    print("\n VEHICLE DETAILS");
-    print("-" * 20);
-    v_make = input("Make: ");
-    v_model = input("Model: ");
-    v_year = input("Year: ");
-    v_engine = input("Engine Size (e.g., 1200 for 1.2L): ");
-    v_plate = input("License Plate: ");
-    
-    # 3. Service Job Details
-    print("\n SERVICE JOB DETAILS");
-    print("-" * 20);
-    j_type = input("Service Type (e.g., 'Oil Change'): ");
-    j_notes = input("Mechanic Notes: ");
-    j_labor = input("Labor Cost (Kshs): ");
-    j_parts = input("Parts Cost (Kshs): ");
+        if choice == "exit" {
+            print("\n👋 System shutting down. Goodbye!");
+            break;
+        };
+        
+        if choice != "yes" {
+            continue;
+        };
+        
+        print("\n STARTING NEW JOB");
+        print("-" * 20);
 
-    # Create and link the tracking nodes to the root
-    root ++> Customer(name=c_name, phone=c_phone, email=c_email);
-    root ++> Vehicle(make=v_make, model=v_model, year=int(v_year), engine=int(v_engine), license_plate=v_plate); 
-    root ++> ServiceJob(
-        service_type=j_type,
-        mechanic_notes=j_notes,
-        labor_cost=float(j_labor),
-        parts_cost=float(j_parts)
-    );
-    root ++> ReportGenerator();
+        # 1. Customer Details
+        print("\n CUSTOMER DETAILS");
+        print("-" * 20);
+        c_name = input("Customer Name: ");
+        c_phone = input("Phone Number: ");
+        c_email = input("Email: ");
 
-    # Run the report generation walker
-    print("\n⚙️ Generating service report...");
-    agent = GarageManager() spawn root;
-    
-    # Display the final LLM-generated report
-    print("\n" + "=" * 40);
-    print("🛠️ FINAL SERVICE REPORT");
-    print("=" * 40);
-    print(agent.data['service_report']);
-    print("\n" + "=" * 40);
-    print(" System Complete. Data stored in graph nodes.");
+        # 2. Vehicle Details
+        print("\n VEHICLE DETAILS");
+        print("-" * 20);
+        v_make = input("Make: ");
+        v_model = input("Model: ");
+        v_year_str = input("Year: "); 
+        v_plate = input("License Plate: ");
+        
+        # 3. Service Job Details
+        print("\n SERVICE JOB DETAILS");
+        print("-" * 20);
+        j_type = input("Service Type (e.g., 'Oil Change'): ");
+        j_notes = input("Mechanic Notes: ");
+        j_labor_str = input("Labor Cost (Kshs): "); 
+        j_parts_str = input("Parts Cost (Kshs): "); 
+
+        # --- Safety Data Conversions (Bypassing compiler issue with try/catch) ---
+        v_year = 0;
+        if len(v_year_str) > 0 {
+            v_year = int(v_year_str); 
+        } else {
+            print("Warning: Year input was empty. Using default 0.");
+        }
+
+        j_labor = 0.0;
+        if len(j_labor_str) > 0 {
+            j_labor = float(j_labor_str);
+        } else {
+            print("Warning: Labor Cost input was empty. Using default 0.0.");
+        }
+        
+        j_parts = 0.0;
+        if len(j_parts_str) > 0 {
+            j_parts = float(j_parts_str);
+        } else {
+            print("Warning: Parts Cost input was empty. Using default 0.0.");
+        }
+        # --- End Conversions ---
+
+        # Create and link the tracking nodes to the root
+        print("\n🔗 Linking job data to the graph...");
+        root ++> Customer(name=c_name, phone=c_phone, email=c_email);
+        root ++> Vehicle(make=v_make, model=v_model, year=v_year, license_plate=v_plate);
+        root ++> ServiceJob(
+            service_type=j_type,
+            mechanic_notes=j_notes,
+            labor_cost=j_labor,
+            parts_cost=j_parts
+        );
+        root ++> ReportGenerator();
+
+        # Run the report generation walker
+        print("\n⚙️ Generating service report using LLM...");
+        agent = GarageManager() spawn root;
+        
+        # Display the final LLM-generated report
+        print("\n" + "=" * 60);
+        print("                   🛠️ FINAL SERVICE REPORT 🛠️");
+        print("=" * 60);
+        print(agent.data['service_report']);
+        print("=" * 60);
+        
+        # Check if user wants to process another job
+        another = input("\nJob Complete. Process another service job? (yes/no): ").strip().lower();
+        if another not in ["yes", "y"] {
+            print("\n👋 System shutting down. Goodbye!");
+            break;
+        };
+    }
 }
